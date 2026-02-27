@@ -52,6 +52,56 @@ setInterval(() => {
       videoWrapper.style.position = 'relative';
     }
 
+    if (sessionStorage.getItem('mbx-resume-fullscreen') === 'true') {
+        sessionStorage.removeItem('mbx-resume-fullscreen');
+        
+        let hasAttemptedFS = false;
+        
+        const attemptFullscreen = () => {
+            if (hasAttemptedFS) return;
+            
+            // Check if we are already in fullscreen natively to avoid toggling it off
+            if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement) {
+                console.log('[Moviebox Extension] Already in fullscreen mode. Skipping programmatic clip.');
+                hasAttemptedFS = true;
+                return;
+            }
+
+            console.log('[Moviebox Extension] Programmatically resuming fullscreen...');
+            hasAttemptedFS = true;
+            try {
+                // Try hooking into the player's native fullscreen button to inherit its logic
+                let fsBtn = document.querySelector('.art-control-fullscreen') || 
+                            document.querySelector('.art-icon-fullscreen') ||
+                            document.querySelector('[data-balloon="Web Fullscreen"]');
+                
+                if (fsBtn && typeof fsBtn.click === 'function') {
+                    fsBtn.click();
+                } else if (videoWrapper) {
+                    if (videoWrapper.requestFullscreen) videoWrapper.requestFullscreen();
+                    else if (videoWrapper.webkitRequestFullscreen) videoWrapper.webkitRequestFullscreen();
+                }
+            } catch(e) {
+                console.log('[Moviebox Extension] Fullscreen resume blocked by browser gesture lock.', e);
+            }
+        };
+
+        // When video has enough data to play, try to resume fullscreen
+        videoElement.addEventListener('canplay', () => {
+            setTimeout(attemptFullscreen, 800); 
+        }, { once: true });
+
+        // Backup hook when actual playback begins
+        videoElement.addEventListener('playing', () => {
+            setTimeout(attemptFullscreen, 1200); 
+        }, { once: true });
+        
+        // If it's already playing by the time we attach
+        if (videoElement.readyState >= 3 && !videoElement.paused) {
+            setTimeout(attemptFullscreen, 500);
+        }
+    }
+
     injectUI();
     attachVideoListeners();
     
@@ -165,6 +215,12 @@ function playNextEpisode() {
   if (nextEpisodeElement) {
     console.log('[Moviebox Extension] Firing click on Next Episode Element:', nextEpisodeElement);
     hasAutoPlayedNext = true;
+
+    // Track if fullscreen was active right before navigating away
+    if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement) {
+        sessionStorage.setItem('mbx-resume-fullscreen', 'true');
+        console.log('[Moviebox Extension] Locked fullscreen state for the next episode.');
+    }
     
     if (nextEpisodeElement.href && nextEpisodeElement.href !== window.location.href && !nextEpisodeElement.href.includes('javascript:')) {
       window.location.href = nextEpisodeElement.href;
