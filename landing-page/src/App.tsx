@@ -388,6 +388,12 @@ export default function App() {
             >
               <Globe className="w-4 h-4" aria-hidden="true" /> Our Website
             </a>
+            <a
+              href="/privacy.html"
+              className="hover:text-primary transition-colors flex items-center gap-2"
+            >
+              <ShieldCheck className="w-4 h-4" aria-hidden="true" /> Privacy
+            </a>
           </nav>
 
           <div className="text-xs font-mono opacity-50">
