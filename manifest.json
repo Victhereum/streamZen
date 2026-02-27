@@ -11,7 +11,9 @@
       "matches": [
         "*://*.123movienow.cc/*",
         "*://*.moviebox.ph/*",
-        "*://*.moviebox.in/*"
+        "*://*.moviebox.in/*",
+        "*://*.moviebox.pk/*",
+        "*://*.moviebox.id/*"
       ],
       "css": ["content.css"],
       "js": ["content.js"],

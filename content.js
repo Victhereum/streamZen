@@ -17,6 +17,11 @@ let countdownOverlay = null;
 let hasAutoPlayedNext = false;
 let findingNextEpInterval = null;
 
+// The Intro DB State
+let tidbDataFetched = false;
+let tidbIntro = null;
+let tidbCredits = null;
+
 // Robust SPA Supervisor Loop
 setInterval(() => {
   const video = document.querySelector('video');
@@ -41,6 +46,11 @@ setInterval(() => {
     skipButton = null;
     nextEpisodeButton = null;
     countdownOverlay = null;
+
+    // Reset TIDB state for new episode
+    tidbDataFetched = false;
+    tidbIntro = null;
+    tidbCredits = null;
 
     if (!videoWrapper.dataset.mbxHover) {
        videoWrapper.addEventListener('mouseenter', () => videoWrapper.classList.add('mbx-video-wrapper-hover'));
@@ -105,6 +115,9 @@ setInterval(() => {
     injectUI();
     attachVideoListeners();
     
+    // Delay metadata extraction to allow the SPA DOM and localStorage to finish updating their state
+    setTimeout(fetchIntroMetadata, 3000);
+    
     findingNextEpInterval = setInterval(findNextEpisodeElement, 2000);
     findNextEpisodeElement();
   }
@@ -113,6 +126,171 @@ setInterval(() => {
 if (!window.mbxCleanClickJacksStarted) {
   cleanClickJacks();
   window.mbxCleanClickJacksStarted = true;
+}
+
+async function fetchIntroMetadata() {
+    if (tidbDataFetched) return;
+    tidbDataFetched = true;
+    console.log('[Moviebox Extension] Attempting to extract metadata for TIDB...');
+
+    let imdbId = null;
+    let season = null;
+    let episode = null;
+
+    // Extract IMDB ID & Season/Episode from the DOM
+    const rawImdb = document.querySelector('[data-id*="tt"], a[href*="imdb.com/title/tt"]');
+    if (rawImdb) {
+        let match = (rawImdb.dataset.id || rawImdb.href).match(/tt\d{7,8}/);
+        if (match) imdbId = match[0];
+    }
+
+    if (!imdbId) {
+        // Fallback: Page source might contain it
+        let htmlMatch = document.documentElement.innerHTML.match(/tt\d{7,8}/);
+        if (htmlMatch) imdbId = htmlMatch[0];
+    }
+    
+    // Fallback URL pattern for IMDB ids if present
+    if (!imdbId) {
+        let urlMatch = window.location.href.match(/tt\d{7,8}/);
+        if (urlMatch) imdbId = urlMatch[0];
+    }
+
+    // Try finding active season/episode
+    const activeEp = document.querySelector('[class*="active" i] > span, [class*="playing" i], [class*="current" i]');
+    if (activeEp) {
+        let text = activeEp.parentElement ? activeEp.parentElement.innerText + activeEp.innerText : activeEp.innerText;
+        let epMatch = text.match(/Ep\s*(\d+)|Episode\s*(\d+)|^(\d+)$/i);
+        if (epMatch) episode = parseInt(epMatch[1] || epMatch[2] || epMatch[3]);
+    }
+    
+    const seasonBtn = document.querySelector('.season-btn, [class*="season" i][class*="active" i]');
+    if (seasonBtn) {
+        let snMatch = seasonBtn.innerText.match(/Season\s*(\d+)|^(\d+)$/i);
+        if (snMatch) season = parseInt(snMatch[1] || snMatch[2]);
+    }
+
+    if (!season && /season[-_]?(\d+)/i.test(window.location.href)) season = parseInt(window.location.href.match(/season[-_]?(\d+)/i)[1]);
+    if (!episode && /episode[-_]?(\d+)/i.test(window.location.href)) episode = parseInt(window.location.href.match(/episode[-_]?(\d+)/i)[1]);
+
+    // Fallback: Local Storage playHistory
+    if (!season || !episode) {
+        try {
+            let histRaw = localStorage.getItem('playHistory');
+            if (histRaw) {
+                let histData = JSON.parse(histRaw);
+                // Handle if it's an array of histories or a single object
+                if (Array.isArray(histData) && histData.length > 0) {
+                    if (!season && histData[0].curSe !== undefined) season = parseInt(histData[0].curSe);
+                    if (!episode && histData[0].curEp !== undefined) episode = parseInt(histData[0].curEp);
+                } else if (typeof histData === 'object' && !Array.isArray(histData)) {
+                    // Handle dictionary/object format
+                    // Check if the values are directly on the object or if it's a map
+                    if (histData.curSe !== undefined || histData.curEp !== undefined) {
+                        if (!season && histData.curSe !== undefined) season = parseInt(histData.curSe);
+                        if (!episode && histData.curEp !== undefined) episode = parseInt(histData.curEp);
+                    } else {
+                        // If it's a map keyed by something else, grab the first value we find with curSe/curEp
+                        let keys = Object.keys(histData);
+                        for (let k of keys) {
+                            if (histData[k] && typeof histData[k] === 'object' && histData[k].curSe !== undefined) {
+                                if (!season) season = parseInt(histData[k].curSe);
+                                if (!episode) episode = parseInt(histData[k].curEp);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (e) {
+            console.log('[Moviebox Extension] Failed to parse playHistory from localStorage:', e);
+        }
+    }
+
+    // Fallback: Title Lookup via imdbot wrapper
+    if (!imdbId) {
+        console.log('[Moviebox Extension] Could not find explicit IMDB ID. Attempting title fallback lookup...');
+        
+        let titleRaw = "";
+        let titleEl = document.querySelector('h2.pc-title') || document.querySelector('h1.pc-nav-title') || document.querySelector('title');
+        if (titleEl) {
+            titleRaw = titleEl.innerText || titleEl.textContent;
+            console.log(`[Moviebox Extension] Using title for IMDB lookup: "${titleRaw}"`);
+        }
+        
+        // Clean title (e.g. "Prison Break S1-S5" -> "Prison Break", "Movie Name (2024)" -> "Movie Name")
+        let cleanTitle = titleRaw.replace(/S\d+(?:-S\d+)?(?:.*?)$/i, '') // Remove S1-S5 and anything after it
+                                 .replace(/Season\s+\d+.*$/i, '') // Remove Season X
+                                 .replace(/Ep(?:isode)?\s*\d+.*$/i, '') // Remove Episode X
+                                 .replace(/\(\d{4}\)/, '') // Remove (2024)
+                                 .replace(/(?:Watch|Online|Free|HD).*?$/ig, '') // Strip generic streaming site words usually in <title>
+                                 .split('-')[0] // Sometimes title is "Movie Name - Watch Free"
+                                 .trim();
+        
+        if (cleanTitle) {
+            console.log(`[Moviebox Extension] Using cleaned title for IMDB lookup: "${cleanTitle}"`);
+            
+            let cacheKey = 'mbx-imdb-' + cleanTitle.toLowerCase();
+            let cachedImdb = localStorage.getItem(cacheKey);
+            
+            if (cachedImdb) {
+                console.log(`[Moviebox Extension] Found IMDB ID in cache for "${cleanTitle}": ${cachedImdb}`);
+                imdbId = cachedImdb;
+            } else {
+                try {
+                    let searchUrl = `https://search.imdbot.workers.dev/?q=${encodeURIComponent(cleanTitle)}`;
+                    let res = await fetch(searchUrl);
+                    if (res.ok) {
+                        let searchData = await res.json();
+                        if (searchData.description && searchData.description.length > 0) {
+                            imdbId = searchData.description[0]['#IMDB_ID'];
+                            if (imdbId) {
+                                console.log(`[Moviebox Extension] Resolved IMDB ID from API: ${imdbId}. Caching it.`);
+                                localStorage.setItem(cacheKey, imdbId);
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.log(`[Moviebox Extension] Imdbot search failed.`, e);
+                }
+            }
+        }
+    }
+
+    if (!imdbId) {
+        console.log('[Moviebox Extension] Could not resolve IMDB ID. Operating with generic fallback logic.');
+        return;
+    }
+
+    console.log(`[Moviebox Extension] Discovered Metadata -> IMDB: ${imdbId} | Season: ${season} | Episode: ${episode}`);
+    
+    // Fetch from TIDB
+    try {
+        let url = `https://api.theintrodb.org/v2/media?imdb_id=${imdbId}`;
+        if (season && episode) {
+            url += `&season=${season}&episode=${episode}`;
+        }
+        
+        console.log(`[Moviebox Extension] Querying TIDB: ${url}`);
+        const response = await fetch(url);
+        
+        if (response.ok) {
+            const data = await response.json();
+            
+            if (data.intro && data.intro.length > 0) {
+                tidbIntro = data.intro[0];
+                console.log(`[Moviebox Extension] TIDB INTRO MATCH: ${tidbIntro.start_ms || 0}ms to ${tidbIntro.end_ms}ms`);
+            }
+            if (data.credits && data.credits.length > 0) {
+                tidbCredits = data.credits[0];
+                console.log(`[Moviebox Extension] TIDB CREDITS MATCH: Starting at ${tidbCredits.start_ms}ms`);
+            }
+        } else {
+            console.log('[Moviebox Extension] TIDB returned no matching exact timestamps (404/Error). Operating with fallback logic.');
+        }
+    } catch (e) {
+        console.error('[Moviebox Extension] Failed to reach TIDB API. Continuing with fallback heuristics.', e);
+    }
 }
 
 function findNextEpisodeElement() {
@@ -254,8 +432,13 @@ function injectUI() {
   skipButton.onclick = (e) => {
     e.stopPropagation();
     if (videoElement) {
-      videoElement.currentTime += SKIP_INTRO_SECONDS;
-      console.log(`[Moviebox Extension] Skipped ${SKIP_INTRO_SECONDS}s`);
+      if (tidbIntro && tidbIntro.end_ms) {
+         videoElement.currentTime = tidbIntro.end_ms / 1000;
+         console.log(`[Moviebox Extension] Skipped exactly to Intro End: ${tidbIntro.end_ms}ms`);
+      } else {
+         videoElement.currentTime += SKIP_INTRO_SECONDS;
+         console.log(`[Moviebox Extension] Skipped generic ${SKIP_INTRO_SECONDS}s`);
+      }
       skipButton.dataset.clicked = "true";
       skipButton.style.display = 'none';
     }
@@ -309,7 +492,18 @@ function attachVideoListeners() {
 
     // Visibility configuration for Next Episode Button
     if (nextEpisodeButton && nextEpisodeElement) {
-        if (timeLeft <= SHOW_NEXT_BTN_LAST_SECONDS && timeLeft > 0) {
+        let isCreditsTime = false;
+        let validCreditsStartMs = (tidbCredits && tidbCredits.start_ms && tidbCredits.start_ms / 1000 < videoElement.duration - 5) 
+                                    ? tidbCredits.start_ms 
+                                    : null;
+
+        if (validCreditsStartMs) {
+            isCreditsTime = (videoElement.currentTime * 1000) >= validCreditsStartMs;
+        } else {
+            isCreditsTime = timeLeft <= SHOW_NEXT_BTN_LAST_SECONDS && timeLeft > 0;
+        }
+
+        if (isCreditsTime) {
             if (nextEpisodeButton.style.display === 'none') {
                 nextEpisodeButton.style.display = 'block';
             }
@@ -322,7 +516,20 @@ function attachVideoListeners() {
 
     // Visibility configuration for Skip Intro
     if (skipButton && skipButton.dataset.clicked !== "true") {
-        if (videoElement.currentTime <= HIDE_SKIP_BTN_AFTER_SECONDS) {
+        let isIntroTime = false;
+        
+        if (tidbIntro && tidbIntro.end_ms) {
+            let start = tidbIntro.start_ms || 0;
+            let currentMs = videoElement.currentTime * 1000;
+            isIntroTime = currentMs >= start && currentMs <= tidbIntro.end_ms;
+            
+            // Auto-hide the button safely if they manually scrubbed past the precise intro
+            if (currentMs > tidbIntro.end_ms + 2000) skipButton.dataset.clicked = "true";
+        } else {
+             isIntroTime = videoElement.currentTime <= HIDE_SKIP_BTN_AFTER_SECONDS;
+        }
+
+        if (isIntroTime) {
             if (skipButton.style.display === 'none') skipButton.style.display = 'block';
         } else {
             if (skipButton.style.display === 'block') skipButton.style.display = 'none';
@@ -331,11 +538,34 @@ function attachVideoListeners() {
     
     if (hasAutoPlayedNext || !nextEpisodeElement) return;
     
-    // Start countdown if we are within the last N seconds
-    if (timeLeft > 0 && timeLeft <= NEXT_EPISODE_COUNTDOWN_SECONDS) {
-      showCountdown(Math.ceil(timeLeft));
+    // Start countdown if we are within the last N seconds (or exact Credits offset)
+    let autoPlayCountdownSecondsLeft = 0;
+    let validCreditsStartMs = (tidbCredits && tidbCredits.start_ms && tidbCredits.start_ms / 1000 < videoElement.duration - 5) 
+                                ? tidbCredits.start_ms 
+                                : null;
+    
+    if (validCreditsStartMs) {
+        // Offset countdown relative to exactly when Credits begin
+        let secondsPastCredits = videoElement.currentTime - (validCreditsStartMs / 1000);
+        if (secondsPastCredits >= 0) {
+           autoPlayCountdownSecondsLeft = NEXT_EPISODE_COUNTDOWN_SECONDS - secondsPastCredits;
+        }
+    } else {
+        // Fallback: End of video generic threshold
+        if (timeLeft > 0 && Math.ceil(timeLeft) <= NEXT_EPISODE_COUNTDOWN_SECONDS) {
+           autoPlayCountdownSecondsLeft = timeLeft;
+        }
+    }
+
+    if (autoPlayCountdownSecondsLeft > 0 && autoPlayCountdownSecondsLeft <= NEXT_EPISODE_COUNTDOWN_SECONDS) {
+      showCountdown(Math.ceil(autoPlayCountdownSecondsLeft));
     } else {
       hideCountdown();
+    }
+    
+    // Auto-play trigger if the countdown expires
+    if (autoPlayCountdownSecondsLeft !== 0 && autoPlayCountdownSecondsLeft <= 0.5 && !hasAutoPlayedNext) {
+        playNextEpisode();
     }
   });
 
