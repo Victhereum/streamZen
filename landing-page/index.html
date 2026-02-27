@@ -2,9 +2,199 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>landing-page</title>
+
+    <!-- Primary SEO Meta Tags -->
+    <title>
+      StreamZen — Skip Intros & Autoplay Next Episode on Moviebox, 123Movies,
+      NetNaija & More
+    </title>
+    <meta
+      name="description"
+      content="StreamZen is a free Chrome extension that auto-skips intros, autoplays the next episode, and removes ads on Moviebox, 123movienow, NetNaija, SFlix, and all Moviebox streaming platforms. Netflix-style binge watching, everywhere."
+    />
+    <meta
+      name="keywords"
+      content="moviebox extension, moviebox skip intro, moviebox next episode, moviebox chrome extension, 123movienow extension, 123movies skip intro, netnaija extension, sflix extension, moviebox autoplay, moviebox ad blocker, skip intro chrome extension, auto next episode, moviebox.ph, moviebox.in, moviebox.pk, moviebox.id, movieboxonline.net, netnaija.film, sflix.film, 123movienow.cc, free streaming extension, binge watch extension, streamzen, stream zen"
+    />
+    <meta name="author" content="Victhereum Technologies" />
+    <meta
+      name="robots"
+      content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+    />
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://streamzen.victhereum.com" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <link rel="apple-touch-icon" href="/logo.png" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://streamzen.victhereum.com" />
+    <meta
+      property="og:title"
+      content="StreamZen — Skip Intros & Autoplay Next Episode on Moviebox"
+    />
+    <meta
+      property="og:description"
+      content="Free Chrome extension that auto-skips intros, autoplays next episodes, and removes ads on Moviebox, 123Movies, NetNaija, SFlix and more. The Netflix experience, everywhere."
+    />
+    <meta
+      property="og:image"
+      content="https://streamzen.victhereum.com/logo.png"
+    />
+    <meta property="og:site_name" content="StreamZen" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://streamzen.victhereum.com" />
+    <meta
+      name="twitter:title"
+      content="StreamZen — Skip Intros & Autoplay on Moviebox & 123Movies"
+    />
+    <meta
+      name="twitter:description"
+      content="Free Chrome extension: auto-skip intros, autoplay next episode, remove ads. Works on Moviebox, 123movienow, NetNaija, SFlix and all Moviebox platforms."
+    />
+    <meta
+      name="twitter:image"
+      content="https://streamzen.victhereum.com/logo.png"
+    />
+
+    <!-- Additional SEO Signals -->
+    <meta name="theme-color" content="#bdde00" />
+    <meta name="application-name" content="StreamZen" />
+    <meta name="apple-mobile-web-app-title" content="StreamZen" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <!-- Preconnect for Performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- JSON-LD Structured Data: SoftwareApplication -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "StreamZen",
+        "alternateName": [
+          "StreamZen Extension",
+          "StreamZen Chrome Extension",
+          "Moviebox Skip Intro Extension"
+        ],
+        "description": "Free Chrome extension that auto-skips intros, autoplays next episodes, persists fullscreen, and removes ads on Moviebox, 123movienow, NetNaija, SFlix, and all Moviebox streaming platforms.",
+        "url": "https://streamzen.victhereum.com",
+        "applicationCategory": "BrowserApplication",
+        "operatingSystem": "Chrome, Edge, Brave, Arc",
+        "browserRequirements": "Requires Chromium-based browser",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "softwareVersion": "1.0",
+        "author": {
+          "@type": "Organization",
+          "name": "Victhereum Technologies",
+          "url": "https://victhereum.com"
+        },
+        "publisher": {
+          "@type": "Organization",
+          "name": "Victhereum Technologies",
+          "url": "https://victhereum.com"
+        },
+        "screenshot": "https://streamzen.victhereum.com/logo.png",
+        "featureList": [
+          "Auto-skip intros on Moviebox and 123movienow",
+          "Autoplay next episode with countdown",
+          "Fullscreen persistence across episodes",
+          "Ad and clickjack removal",
+          "Works on moviebox.ph, 123movienow.cc, netnaija.film, sflix.film, movieboxonline.net, moviebox.in, moviebox.pk, moviebox.id"
+        ],
+        "keywords": "moviebox, moviebox extension, skip intro, next episode, 123movienow, netnaija, sflix, chrome extension, moviebox autoplay, moviebox ad blocker"
+      }
+    </script>
+
+    <!-- JSON-LD Structured Data: WebSite (for Sitelinks Search Box) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "StreamZen",
+        "url": "https://streamzen.victhereum.com",
+        "description": "The free Chrome extension for Moviebox that skips intros, autoplays episodes, and removes ads.",
+        "publisher": {
+          "@type": "Organization",
+          "name": "Victhereum Technologies",
+          "url": "https://victhereum.com"
+        }
+      }
+    </script>
+
+    <!-- JSON-LD Structured Data: FAQPage (rich snippets) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "What is StreamZen?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "StreamZen is a free, open-source Chrome extension that brings Netflix-style automation to Moviebox and similar streaming sites. It auto-skips intros, autoplays the next episode, persists fullscreen mode, and removes intrusive ads and clickjacking overlays."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Which websites does StreamZen work on?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "StreamZen works on moviebox.ph, 123movienow.cc, netnaija.film, sflix.film, movieboxonline.net, moviebox.in, moviebox.pk, and moviebox.id. More sites are being added regularly."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Is StreamZen free?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes, StreamZen is completely free and open source. You can install it from the Chrome Web Store or build it from the source code on GitHub."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does StreamZen work on 123movienow?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes, StreamZen fully supports 123movienow.cc with auto skip intro, next episode autoplay, fullscreen persistence, and ad removal features."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How does StreamZen skip intros accurately?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "StreamZen uses The Intro DB (TIDB) API to fetch precise intro and credits timestamps for each episode. If data isn't available, it falls back to smart heuristics so you always get a smooth experience."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does StreamZen work on NetNaija?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes, StreamZen supports netnaija.film with the same auto-skip, autoplay, and ad-removal features available on all supported Moviebox platforms."
+            }
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

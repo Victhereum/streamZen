@@ -1,0 +1,16 @@
+{
+  "name": "StreamZen",
+  "short_name": "StreamZen",
+  "description": "Free Chrome extension: auto-skip intros, autoplay next episode, remove ads on Moviebox, 123movienow, NetNaija, SFlix and more.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#bdde00",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -84,7 +84,7 @@
     --destructive-foreground: #fafafa;
     --border: #27272a;
     --input: #27272a;
-    --ring: #07b84e;
+    --ring: #bdde00;
     --radius: 0.5rem;
   }
 }
@@ -95,5 +95,19 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
+}
+
+/* Screen-reader only: visible to crawlers but hidden visually */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }
