@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Moviebox Next Episode",
+  "name": "StreamZen: Cinematic Companion for Moviebox",
   "version": "1.0",
-  "description": "Netflix-style Next Episode and Skip Intro for Moviebox & 123movienow",
+  "description": "Netflix-style Next Episode and Skip Intro for all Moviebox streaming platforms like123movienow, NetNaija etc",
   "permissions": [
     "storage"
   ],
@@ -11,6 +11,9 @@
       "matches": [
         "*://*.123movienow.cc/*",
         "*://*.moviebox.ph/*",
+        "*://*.netnaija.film/*",
+        "*://*.sflix.film/*",
+        "*://*.movieboxonline.net/*",
         "*://*.moviebox.in/*",
         "*://*.moviebox.pk/*",
         "*://*.moviebox.id/*"
