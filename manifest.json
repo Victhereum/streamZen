@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Moviebox Next Episode",
+  "version": "1.0",
+  "description": "Netflix-style Next Episode and Skip Intro for Moviebox & 123movienow",
+  "permissions": [
+    "storage"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.123movienow.cc/*",
+        "*://*.moviebox.ph/*",
+        "*://*.moviebox.in/*"
+      ],
+      "css": ["content.css"],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ]
+}
