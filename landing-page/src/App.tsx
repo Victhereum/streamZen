@@ -16,7 +16,7 @@ import {
   Star,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 
 // Branding & Config
 const BRAND_NAME = "StreamZen";
@@ -136,6 +136,21 @@ function detectBrowser(): BrowserInfo {
 export default function App() {
   const browser = useMemo(() => detectBrowser(), []);
   const BrowserIcon = browser.icon;
+  const [starCount, setStarCount] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("https://api.github.com/repos/victhereum/streamZen", {
+      headers: { Accept: "application/vnd.github.v3+json" },
+    })
+      .then((res) => (res.ok ? res.json() : Promise.reject()))
+      .then((data) => {
+        const count = data.stargazers_count ?? 0;
+        setStarCount(
+          count >= 1000 ? `${(count / 1000).toFixed(1)}k` : `${count}`,
+        );
+      })
+      .catch(() => setStarCount("★"));
+  }, []);
 
   return (
     <div className="min-h-screen bg-background text-foreground selection:bg-primary selection:text-primary-foreground">
@@ -272,7 +287,7 @@ export default function App() {
                   <div className="w-px h-3 bg-border mx-1" />
                   <div className="flex items-center gap-1 text-primary">
                     <Star className="w-3 h-3 fill-primary" />
-                    <span>1.2k+</span>
+                    <span>{starCount ?? "..."}</span>
                   </div>
                 </motion.a>
               </div>
