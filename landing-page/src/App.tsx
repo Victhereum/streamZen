@@ -489,7 +489,7 @@ export default function App() {
                 <Card className="bg-muted/50 border-none col-span-2">
                   <CardHeader className="p-6">
                     <blockquote className="text-lg font-bold mb-1 italic">
-                      "It just works. I haven't clicked 'Skip' in months."
+                      "It just works."
                     </blockquote>
                     <CardDescription className="text-xs opacity-50">
                       — Happy User
