@@ -22,6 +22,9 @@
   <a href="https://streamzen.victhereum.com">
     <img src="https://img.shields.io/badge/Website-streamzen.victhereum.com-bdde00?style=for-the-badge&logo=safari&logoColor=white" alt="Website" />
   </a>
+  <a href="https://flutterwave.com/donate/zcyylavbtsa4">
+    <img src="https://img.shields.io/badge/Support-Buy%20Me%20Zobo-ff4a4a?style=for-the-badge&logo=heart&logoColor=white" alt="Buy Me Zobo" />
+  </a>
 </p>
 
 ---
@@ -297,6 +300,18 @@ Read the full [Privacy Policy](https://streamzen.victhereum.com/privacy.html).
 | APIs         | [The Intro DB](https://www.theintrodb.org/), [Imdbot](https://search.imdbot.workers.dev/) |
 | Landing Page | React, TypeScript, Vite, Tailwind CSS v4, shadcn/ui, Framer Motion                        |
 | Hosting      | Victhereum Infrastructure                                                                 |
+
+---
+
+## 💖 Support the Project
+
+StreamZen is and will always be free. If you find it useful and want to support its development, you can "Buy Me Zobo" — it helps keep the project alive!
+
+<p align="left">
+  <a href="https://flutterwave.com/donate/zcyylavbtsa4">
+    <img src="https://img.shields.io/badge/Support-Buy%20Me%20Zobo-ff4a4a?style=for-the-badge&logo=heart&logoColor=white" alt="Buy Me Zobo" />
+  </a>
+</p>
 
 ---
 

@@ -14,6 +14,7 @@ import {
   Users,
   Github,
   Star,
+  Heart,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect, useMemo } from "react";
@@ -26,6 +27,7 @@ const SUPPORT_EMAIL = "hi@victhereum.com";
 const GITHUB_URL = "https://github.com/victhereum/streamZen";
 const CHROME_STORE_URL =
   "https://chromewebstore.google.com/detail/streamzen-cinematic-compa/ffkoailjikbieofjmojdpnhfcighomli";
+const DONATE_URL = "https://flutterwave.com/donate/zcyylavbtsa4";
 
 const SUPPORTED_SITES = [
   "moviebox.ph",
@@ -159,50 +161,90 @@ export default function App() {
         className="fixed top-0 w-full z-50 border-b bg-background/80 backdrop-blur-md"
         aria-label="Main navigation"
       >
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <a
-            href="/"
-            className="flex items-center gap-2"
-            aria-label="StreamZen Home"
-          >
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <img
-                src="logo-black.png"
-                className="w-6 h-6"
-                alt="StreamZen logo"
-                width="24"
-                height="24"
-              />
-            </div>
-            <span className="text-xl font-bold tracking-tight">
-              {BRAND_NAME}
-            </span>
-          </a>
-          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
+          {/* Left: Brand & Links */}
+          <div className="flex items-center gap-8">
             <a
-              href="#features"
-              className="hover:text-primary transition-colors"
+              href="/"
+              className="flex items-center gap-2.5 shrink-0"
+              aria-label="StreamZen Home"
             >
-              Features
+              <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 transition-transform hover:scale-105">
+                <img
+                  src="logo-black.png"
+                  className="w-6 h-6"
+                  alt="StreamZen logo"
+                  width="24"
+                  height="24"
+                />
+              </div>
+              <span className="text-xl font-bold tracking-tight hidden sm:block">
+                {BRAND_NAME}
+              </span>
             </a>
-            <a href="#about" className="hover:text-primary transition-colors">
-              About
-            </a>
-            <a
+
+            <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-muted-foreground">
+              <a
+                href="#features"
+                className="hover:text-primary transition-colors relative group"
+              >
+                Features
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full" />
+              </a>
+              <a
+                href="#about"
+                className="hover:text-primary transition-colors relative group"
+              >
+                About
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full" />
+              </a>
+            </nav>
+          </div>
+
+          {/* Right: Actions */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            <motion.a
               href={GITHUB_URL}
               target="_blank"
               rel="noreferrer"
-              className="hover:text-primary transition-colors flex items-center gap-2"
+              whileHover={{ scale: 1.02 }}
+              className="hidden lg:flex items-center gap-2 px-3.5 py-2 rounded-full bg-muted/40 border border-border hover:bg-muted/60 transition-colors text-sm font-medium"
+              aria-label="View StreamZen source code on GitHub"
             >
-              <Github className="w-4 h-4" /> GitHub
+              <Github className="w-4 h-4" />
+              <div className="w-px h-3 bg-border mx-1" />
+              <div className="flex items-center gap-1.5 text-primary">
+                <Star className="w-3.5 h-3.5 fill-primary" />
+                <span className="tabular-nums">{starCount ?? "..."}</span>
+              </div>
+            </motion.a>
+
+            <a
+              href={DONATE_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="px-4 py-2 rounded-full border border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 transition-colors flex items-center gap-2 text-sm font-semibold"
+            >
+              <Heart className="w-4 h-4 fill-primary" />
+              <span className="hidden sm:inline">Buy Me Zobo</span>
+            </a>
+
+            <a
+              href={CHROME_STORE_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="shrink-0"
+            >
+              <Button
+                size="sm"
+                className="font-bold px-5 gap-2 shadow-md shadow-primary/10 transition-all hover:shadow-lg hover:shadow-primary/20"
+              >
+                <BrowserIcon className="w-4 h-4" />
+                <span className="hidden sm:inline">Add to </span>
+                {browser.name}
+              </Button>
             </a>
           </div>
-          <a href={CHROME_STORE_URL} target="_blank" rel="noreferrer">
-            <Button size="sm" className="font-semibold px-6 gap-2">
-              <BrowserIcon className="w-4 h-4" />
-              Add to {browser.name}
-            </Button>
-          </a>
         </div>
       </nav>
 
@@ -273,22 +315,14 @@ export default function App() {
                     </div>
                   )}
                 </div>
-
                 <motion.a
-                  href={GITHUB_URL}
+                  href={DONATE_URL}
                   target="_blank"
                   rel="noreferrer"
                   whileHover={{ scale: 1.05 }}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted/50 border border-border hover:bg-muted transition-colors text-sm font-medium"
-                  aria-label="View StreamZen source code on GitHub"
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-2"
                 >
-                  <Github className="w-4 h-4" />
-                  <span>Open Source on GitHub</span>
-                  <div className="w-px h-3 bg-border mx-1" />
-                  <div className="flex items-center gap-1 text-primary">
-                    <Star className="w-3 h-3 fill-primary" />
-                    <span>{starCount ?? "..."}</span>
-                  </div>
+                  <Heart className="w-4 h-4" /> Support the project: Buy Me Zobo
                 </motion.a>
               </div>
             </motion.div>
@@ -542,6 +576,14 @@ export default function App() {
               className="hover:text-primary transition-colors flex items-center gap-2"
             >
               <ShieldCheck className="w-4 h-4" aria-hidden="true" /> Privacy
+            </a>
+            <a
+              href={DONATE_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="hover:text-primary transition-colors flex items-center gap-2"
+            >
+              <Heart className="w-4 h-4" aria-hidden="true" /> Buy Me Zobo
             </a>
           </nav>
 
