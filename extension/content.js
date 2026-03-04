@@ -1,10 +1,39 @@
 /* content.js */
 
-// Constants
-const SKIP_INTRO_SECONDS = 85;
-const NEXT_EPISODE_COUNTDOWN_SECONDS = 15;
+// Settings loaded from storage
+let settings = {
+  alwaysUnmute: false,
+  autoSkip: false,
+  instantSkip: false,
+  skipIntroTime: 85,
+  nextEpTime: 15
+};
+
 const SHOW_NEXT_BTN_LAST_SECONDS = 150; // Show the Next Episode button in the final 2.5 mins
 const HIDE_SKIP_BTN_AFTER_SECONDS = 300; // Hide Skip Intro after 5 minutes
+
+// Initialize settings
+if (typeof chrome !== 'undefined' && chrome.storage) {
+  chrome.storage.local.get({
+    alwaysUnmute: false,
+    autoSkip: false,
+    instantSkip: false,
+    skipIntroTime: 85,
+    nextEpTime: 15
+  }, (items) => {
+    Object.assign(settings, items);
+  });
+
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName === 'local') {
+      for (let [key, { newValue }] of Object.entries(changes)) {
+        if (settings[key] !== undefined) {
+          settings[key] = newValue;
+        }
+      }
+    }
+  });
+}
 
 // State
 let videoElement = null;
@@ -16,6 +45,17 @@ let nextEpisodeButton = null;
 let countdownOverlay = null;
 let hasAutoPlayedNext = false;
 let findingNextEpInterval = null;
+let isSeries = false;
+let hasAutoUnmuted = false;
+
+// Auto-Skip States
+let autoSkipIntroTimer = null;
+let autoSkipIntroSeconds = 3;
+let autoSkipIntroCancelled = false;
+
+let autoSkipNextTimer = null;
+let autoSkipNextSeconds = 3;
+let autoSkipNextCancelled = false;
 
 // The Intro DB State
 let tidbDataFetched = false;
@@ -46,6 +86,16 @@ setInterval(() => {
     skipButton = null;
     nextEpisodeButton = null;
     countdownOverlay = null;
+    isSeries = false;
+    hasAutoUnmuted = false;
+
+    if (autoSkipIntroTimer) clearInterval(autoSkipIntroTimer);
+    autoSkipIntroTimer = null;
+    autoSkipIntroCancelled = false;
+
+    if (autoSkipNextTimer) clearInterval(autoSkipNextTimer);
+    autoSkipNextTimer = null;
+    autoSkipNextCancelled = false;
 
     // Reset TIDB state for new episode
     tidbDataFetched = false;
@@ -96,20 +146,18 @@ setInterval(() => {
             }
         };
 
-        // When video has enough data to play, try to resume fullscreen
-        videoElement.addEventListener('canplay', () => {
-            setTimeout(attemptFullscreen, 800); 
-        }, { once: true });
-
-        // Backup hook when actual playback begins
-        videoElement.addEventListener('playing', () => {
-            setTimeout(attemptFullscreen, 1200); 
-        }, { once: true });
+        const fsMonitor = () => {
+             if (hasAttemptedFS) {
+                 videoElement.removeEventListener('timeupdate', fsMonitor);
+                 return;
+             }
+             if (!videoElement.paused && videoElement.currentTime > 0.1) {
+                 videoElement.removeEventListener('timeupdate', fsMonitor);
+                 attemptFullscreen();
+             }
+        };
         
-        // If it's already playing by the time we attach
-        if (videoElement.readyState >= 3 && !videoElement.paused) {
-            setTimeout(attemptFullscreen, 500);
-        }
+        videoElement.addEventListener('timeupdate', fsMonitor);
     }
 
     injectUI();
@@ -172,6 +220,12 @@ async function fetchIntroMetadata() {
 
     if (!season && /season[-_]?(\d+)/i.test(window.location.href)) season = parseInt(window.location.href.match(/season[-_]?(\d+)/i)[1]);
     if (!episode && /episode[-_]?(\d+)/i.test(window.location.href)) episode = parseInt(window.location.href.match(/episode[-_]?(\d+)/i)[1]);
+
+    if (season !== null || episode !== null) {
+        isSeries = true;
+    } else if (activeEp || seasonBtn || /season|episode/i.test(window.location.href)) {
+        isSeries = true;
+    }
 
     // Fallback: Local Storage playHistory
     if (!season || !episode) {
@@ -308,6 +362,7 @@ function findNextEpisodeElement() {
         const style = window.getComputedStyle(el);
         if (style.display !== 'none' && style.visibility !== 'hidden') {
           nextEpisodeElement = el;
+          isSeries = true;
           console.log('[Moviebox Extension] Next episode found by text heuristic:', nextEpisodeElement, 'Text:', text);
           updateUIToShowNextButton();
           return;
@@ -333,6 +388,7 @@ function findNextEpisodeElement() {
         // If next sibling is a short number or contains "ep", it's very likely the next episode
         if (/^\d{1,3}$/.test(text) || /ep\s*\d+/i.test(text) || /episode\s*\d+/i.test(text)) {
             nextEpisodeElement = next;
+            isSeries = true;
             console.log('[Moviebox Extension] Found next episode element from class ('+selector+'):', nextEpisodeElement, 'Text:', text);
             updateUIToShowNextButton();
             return;
@@ -375,6 +431,7 @@ function findNextEpisodeElement() {
          }
 
          nextEpisodeElement = target;
+         isSeries = true;
          console.log('[Moviebox Extension] Found next episode element via Grid Detector:', nextEpisodeElement, 'Text:', el.innerText);
          updateUIToShowNextButton();
          return;
@@ -431,13 +488,23 @@ function injectUI() {
   skipButton.style.display = 'block';
   skipButton.onclick = (e) => {
     e.stopPropagation();
+    
+    // If we're clicking it while it's auto-skipping, CANCEL the auto-skip instead of skipping
+    if (autoSkipIntroTimer) {
+        clearInterval(autoSkipIntroTimer);
+        autoSkipIntroTimer = null;
+        autoSkipIntroCancelled = true;
+        skipButton.innerText = 'Skip Intro';
+        return;
+    }
+    
     if (videoElement) {
       if (tidbIntro && tidbIntro.end_ms) {
          videoElement.currentTime = tidbIntro.end_ms / 1000;
          console.log(`[Moviebox Extension] Skipped exactly to Intro End: ${tidbIntro.end_ms}ms`);
       } else {
-         videoElement.currentTime += SKIP_INTRO_SECONDS;
-         console.log(`[Moviebox Extension] Skipped generic ${SKIP_INTRO_SECONDS}s`);
+         videoElement.currentTime += settings.skipIntroTime;
+         console.log(`[Moviebox Extension] Skipped generic ${settings.skipIntroTime}s`);
       }
       skipButton.dataset.clicked = "true";
       skipButton.style.display = 'none';
@@ -460,7 +527,7 @@ function injectUI() {
   countdownOverlay.className = 'mbx-countdown-overlay';
   countdownOverlay.innerHTML = `
     <div class="mbx-countdown-title">Next Episode playing in</div>
-    <div class="mbx-countdown-number" id="mbx-countdown-val">${NEXT_EPISODE_COUNTDOWN_SECONDS}</div>
+    <div class="mbx-countdown-number" id="mbx-countdown-val">-</div>
     <div class="mbx-countdown-actions">
       <button class="mbx-action-btn mbx-btn-play" id="mbx-btn-play-now">Play Now</button>
       <button class="mbx-action-btn mbx-btn-cancel" id="mbx-btn-cancel-next">Cancel</button>
@@ -477,6 +544,11 @@ function injectUI() {
   document.getElementById('mbx-btn-cancel-next').onclick = (e) => {
     e.stopPropagation();
     hideCountdown();
+    if (autoSkipNextTimer) {
+        clearInterval(autoSkipNextTimer);
+        autoSkipNextTimer = null;
+    }
+    autoSkipNextCancelled = true; 
     hasAutoPlayedNext = true; 
   };
 }
@@ -484,6 +556,19 @@ function injectUI() {
 function attachVideoListeners() {
   if (!videoElement || videoElement.dataset.mbxAttached === 'true') return;
   videoElement.dataset.mbxAttached = 'true';
+
+  videoElement.addEventListener('playing', () => {
+    if (settings.alwaysUnmute && !hasAutoUnmuted) {
+        hasAutoUnmuted = true;
+        if (videoElement.muted) {
+            videoElement.muted = false;
+        }
+        if (videoElement.volume === 0) {
+            videoElement.volume = 1;
+        }
+        console.log('[Moviebox Extension] Auto-unmuted player');
+    }
+  });
 
   videoElement.addEventListener('timeupdate', () => {
     if (isNaN(videoElement.duration)) return;
@@ -503,7 +588,7 @@ function attachVideoListeners() {
             isCreditsTime = timeLeft <= SHOW_NEXT_BTN_LAST_SECONDS && timeLeft > 0;
         }
 
-        if (isCreditsTime) {
+        if (isSeries && isCreditsTime) {
             if (nextEpisodeButton.style.display === 'none') {
                 nextEpisodeButton.style.display = 'block';
             }
@@ -517,11 +602,13 @@ function attachVideoListeners() {
     // Visibility configuration for Skip Intro
     if (skipButton && skipButton.dataset.clicked !== "true") {
         let isIntroTime = false;
+        let exactIntro = false;
         
         if (tidbIntro && tidbIntro.end_ms) {
             let start = tidbIntro.start_ms || 0;
             let currentMs = videoElement.currentTime * 1000;
             isIntroTime = currentMs >= start && currentMs <= tidbIntro.end_ms;
+            exactIntro = true;
             
             // Auto-hide the button safely if they manually scrubbed past the precise intro
             if (currentMs > tidbIntro.end_ms + 2000) skipButton.dataset.clicked = "true";
@@ -529,10 +616,47 @@ function attachVideoListeners() {
              isIntroTime = videoElement.currentTime <= HIDE_SKIP_BTN_AFTER_SECONDS;
         }
 
-        if (isIntroTime) {
-            if (skipButton.style.display === 'none') skipButton.style.display = 'block';
+        if (isSeries && isIntroTime) {
+            if (settings.autoSkip && exactIntro && !autoSkipIntroCancelled) {
+                if (settings.instantSkip) {
+                    if (skipButton.dataset.clicked !== "true") {
+                        console.log(`[Moviebox Extension] Auto-skipping using exact TIDB intro trigger.`);
+                        skipButton.click();
+                    }
+                } else {
+                    if (!autoSkipIntroTimer && skipButton.dataset.clicked !== "true") {
+                        autoSkipIntroSeconds = 3;
+                        skipButton.innerText = `Auto-skipping in ${autoSkipIntroSeconds}s (Cancel)`;
+                        if (skipButton.style.display === 'none') skipButton.style.display = 'block';
+                        
+                        autoSkipIntroTimer = setInterval(() => {
+                            autoSkipIntroSeconds -= 1;
+                            if (autoSkipIntroSeconds <= 0) {
+                                clearInterval(autoSkipIntroTimer);
+                                autoSkipIntroTimer = null;
+                                if (skipButton.dataset.clicked !== "true" && !autoSkipIntroCancelled) {
+                                    skipButton.click();
+                                }
+                            } else {
+                                skipButton.innerText = `Auto-skipping in ${autoSkipIntroSeconds}s (Cancel)`;
+                            }
+                        }, 1000);
+                    }
+                }
+            } else if (!settings.autoSkip || !exactIntro || autoSkipIntroCancelled) {
+                if (skipButton.style.display === 'none') skipButton.style.display = 'block';
+                if (skipButton.innerText !== 'Skip Intro' && !autoSkipIntroTimer) {
+                    skipButton.innerText = 'Skip Intro';
+                }
+            }
         } else {
-            if (skipButton.style.display === 'block') skipButton.style.display = 'none';
+            if (skipButton.style.display === 'block') {
+                skipButton.style.display = 'none';
+                if (autoSkipIntroTimer) {
+                    clearInterval(autoSkipIntroTimer);
+                    autoSkipIntroTimer = null;
+                }
+            }
         }
     }
     
@@ -548,22 +672,58 @@ function attachVideoListeners() {
         // Offset countdown relative to exactly when Credits begin
         let secondsPastCredits = videoElement.currentTime - (validCreditsStartMs / 1000);
         if (secondsPastCredits >= 0) {
-           autoPlayCountdownSecondsLeft = NEXT_EPISODE_COUNTDOWN_SECONDS - secondsPastCredits;
+           autoPlayCountdownSecondsLeft = settings.nextEpTime - secondsPastCredits;
         }
     } else {
         // Fallback: End of video generic threshold
-        if (timeLeft > 0 && Math.ceil(timeLeft) <= NEXT_EPISODE_COUNTDOWN_SECONDS) {
+        if (timeLeft > 0 && Math.ceil(timeLeft) <= settings.nextEpTime) {
            autoPlayCountdownSecondsLeft = timeLeft;
         }
     }
 
-    if (autoPlayCountdownSecondsLeft > 0 && autoPlayCountdownSecondsLeft <= NEXT_EPISODE_COUNTDOWN_SECONDS) {
-      showCountdown(Math.ceil(autoPlayCountdownSecondsLeft));
+    if (isSeries && autoPlayCountdownSecondsLeft > 0 && autoPlayCountdownSecondsLeft <= settings.nextEpTime) {
+      if (settings.autoSkip && !hasAutoPlayedNext && !autoSkipNextCancelled) {
+          if (settings.instantSkip) {
+              playNextEpisode();
+          } else {
+              if (!autoSkipNextTimer) {
+                  autoSkipNextSeconds = 3;
+                  showCountdown(autoSkipNextSeconds);
+                  
+                  const titleEl = document.querySelector('.mbx-countdown-title');
+                  if (titleEl) titleEl.innerText = "Auto-skipping to Next Episode in";
+                  
+                  autoSkipNextTimer = setInterval(() => {
+                      autoSkipNextSeconds -= 1;
+                      if (autoSkipNextSeconds <= 0) {
+                          clearInterval(autoSkipNextTimer);
+                          autoSkipNextTimer = null;
+                          if (!hasAutoPlayedNext && !autoSkipNextCancelled) {
+                              playNextEpisode();
+                          }
+                      } else {
+                          showCountdown(autoSkipNextSeconds);
+                      }
+                  }, 1000);
+              }
+          }
+      } else if (!settings.autoSkip && !hasAutoPlayedNext) {
+          // Standard countdown
+          const titleEl = document.querySelector('.mbx-countdown-title');
+          if (titleEl) titleEl.innerText = "Next Episode playing in";
+          showCountdown(Math.ceil(autoPlayCountdownSecondsLeft));
+      } else if (autoSkipNextCancelled && !hasAutoPlayedNext) {
+          hideCountdown();
+      }
     } else {
       hideCountdown();
+      if (autoSkipNextTimer) {
+          clearInterval(autoSkipNextTimer);
+          autoSkipNextTimer = null;
+      }
     }
     
-    // Auto-play trigger if the countdown expires
+    // Auto-play trigger if the standard countdown expires
     if (autoPlayCountdownSecondsLeft !== 0 && autoPlayCountdownSecondsLeft <= 0.5 && !hasAutoPlayedNext) {
         playNextEpisode();
     }
@@ -608,27 +768,61 @@ function hideCountdown() {
 // Aggressive Ad/Clickjack removal
 function cleanClickJacks() {
   setInterval(() => {
-    const divs = document.querySelectorAll('div');
+    // 1. Explicitly remove known visible popup ads
+    const explicitAds = document.querySelectorAll('.pauseNativePC, .adIcon, [class*="pauseNative"]');
+    explicitAds.forEach(ad => {
+        console.log('[Moviebox Extension] Removed known popup ad:', ad);
+        ad.remove();
+    });
+
+    // 2. Scan for transparent clickjacks
+    const divs = document.querySelectorAll('div, a');
+    const safeClasses = ['mbx', 'art-', 'vjs-', 'jw-', 'plyr-', 'dplayer-', 'fp-', 'html5-'];
+    
     divs.forEach(div => {
+      // Don't remove extension UI or video player logic wrappers
+      let classes = (div.className && typeof div.className === 'string') ? div.className.toLowerCase() : '';
+      if (safeClasses.some(c => classes.includes(c))) return;
+      if (div.querySelector('video')) return; 
+
       const style = window.getComputedStyle(div);
-      if ((style.position === 'absolute' || style.position === 'fixed') && 
-          style.zIndex > 1000 && 
-          parseFloat(style.opacity) < 0.1 && 
-          div.clientWidth > window.innerWidth * 0.5 && 
-          div.clientHeight > window.innerHeight * 0.5 &&
-          !div.className.includes('mbx')) {
-        console.log('[Moviebox Extension] Removed clickjack overlay:', div);
-        div.remove();
+      if (style.position !== 'absolute' && style.position !== 'fixed') return;
+      
+      let zIndex = parseInt(style.zIndex, 10);
+      if (isNaN(zIndex) || zIndex < 50) return;
+
+      let opacity = parseFloat(style.opacity);
+      // Transparent click zones
+      let isInvisible = opacity < 0.1 || style.backgroundColor === 'rgba(0, 0, 0, 0)' || style.backgroundColor === 'transparent';
+      
+      let w = div.clientWidth || div.offsetWidth;
+      let h = div.clientHeight || div.offsetHeight;
+      
+      let coversScreen = w > window.innerWidth * 0.5 && h > window.innerHeight * 0.5;
+      let coversPlayer = videoWrapper && w >= videoWrapper.clientWidth * 0.8 && h >= videoWrapper.clientHeight * 0.8;
+
+      if (isInvisible && (coversScreen || coversPlayer)) {
+         if (div.innerText.trim() === '' && !div.querySelector('img') && !div.querySelector('svg')) {
+             console.log('[Moviebox Extension] Removed empty clickjack overlay:', div);
+             div.remove();
+         }
       }
     });
 
     const iframes = document.querySelectorAll('iframe');
     iframes.forEach(iframe => {
         const style = window.getComputedStyle(iframe);
-        if (style.position === 'absolute' && parseFloat(style.opacity) < 0.1 && iframe.clientWidth > 300) {
+        if (style.position !== 'absolute') return;
+        
+        let w = iframe.clientWidth || iframe.offsetWidth;
+        let opacity = parseFloat(style.opacity);
+        
+        let coversPlayer = videoWrapper && w >= videoWrapper.clientWidth * 0.8;
+        
+        if ((opacity < 0.1 || style.visibility === 'hidden') && (w > 300 || coversPlayer)) {
             console.log('[Moviebox Extension] Removed clickjack iframe:', iframe);
             iframe.remove();
         }
     });
-  }, 2000);
+  }, 1000); // Polling every 1s to aggressively intercept ad insertions
 }

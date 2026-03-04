@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>StreamZen Settings</title>
+    <link rel="stylesheet" href="popup.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <img src="icons/logo48.png" alt="StreamZen Logo" class="logo" />
+        <h1>StreamZen</h1>
+      </div>
+
+      <div class="settings-group">
+        <div class="setting-item">
+          <div class="setting-info">
+            <label>Always Unmute Player</label>
+            <span class="desc">Automatically unmute when playback starts.</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="alwaysUnmute" />
+            <span class="slider round"></span>
+          </label>
+        </div>
+
+        <div class="setting-item">
+          <div class="setting-info">
+            <label>Auto-Skip Intros & Credits</label>
+            <span class="desc">Skip automatically after 3 seconds.</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="autoSkip" />
+            <span class="slider round"></span>
+          </label>
+        </div>
+
+        <div class="setting-item" id="instantSkipContainer">
+          <div class="setting-info">
+            <label>Just Skip</label>
+            <span class="desc">Skip instantly without a countdown.</span>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="instantSkip" />
+            <span class="slider round"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <div class="setting-item slider-item">
+          <div class="setting-info">
+            <label>Skip Intro Time</label>
+            <span class="desc">Fallback if intro timestamps aren't found.</span>
+          </div>
+          <div class="slider-container">
+            <input
+              type="range"
+              id="skipIntroTime"
+              min="10"
+              max="180"
+              step="5"
+              value="85"
+            />
+            <span id="skipIntroTimeVal" class="slider-val">85s</span>
+          </div>
+        </div>
+
+        <div class="setting-item slider-item">
+          <div class="setting-info">
+            <label>Next Episode Trigger</label>
+            <span class="desc">Countdown time remaining (seconds).</span>
+          </div>
+          <div class="slider-container">
+            <input
+              type="range"
+              id="nextEpTime"
+              min="5"
+              max="60"
+              step="1"
+              value="15"
+            />
+            <span id="nextEpTimeVal" class="slider-val">15s</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">Version 1.0.0</div>
+    </div>
+    <script src="popup.js"></script>
+  </body>
+</html>
