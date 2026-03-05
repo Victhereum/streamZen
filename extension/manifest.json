@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "StreamZen: Cinematic Companion for Moviebox",
   "short_name": "StreamZen",
-  "version": "1.2",
+  "version": "1.0.1",
   "author": "Victhereum Technologies",
   "homepage_url": "https://streamzen.victhereum.com",
   "description": "Netflix-style Next Episode and Skip Intro for all Moviebox streaming platforms like123movienow, NetNaija etc",
