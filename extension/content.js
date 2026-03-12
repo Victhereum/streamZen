@@ -613,7 +613,7 @@ function attachVideoListeners() {
             // Auto-hide the button safely if they manually scrubbed past the precise intro
             if (currentMs > tidbIntro.end_ms + 2000) skipButton.dataset.clicked = "true";
         } else {
-             isIntroTime = videoElement.currentTime <= HIDE_SKIP_BTN_AFTER_SECONDS;
+             isIntroTime = videoElement.currentTime <= settings.skipIntroTime;
         }
 
         if (isSeries && isIntroTime) {
@@ -769,7 +769,7 @@ function hideCountdown() {
 function cleanClickJacks() {
   setInterval(() => {
     // 1. Explicitly remove known visible popup ads
-    const explicitAds = document.querySelectorAll('.pauseNativePC, .adIcon, [class*="pauseNative"]');
+    const explicitAds = document.querySelectorAll('.pauseNativePC, .adIcon, .h5-video-Ads, .countdownContainer, .preNativePC, .pc-video-Ads, [class*="pauseNative"]');
     explicitAds.forEach(ad => {
         console.log('[Moviebox Extension] Removed known popup ad:', ad);
         ad.remove();
@@ -824,5 +824,5 @@ function cleanClickJacks() {
             iframe.remove();
         }
     });
-  }, 1000); // Polling every 1s to aggressively intercept ad insertions
+  }, 500); // Polling every 500ms to aggressively intercept ad insertions
 }

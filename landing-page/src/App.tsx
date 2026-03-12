@@ -30,6 +30,8 @@ const SUPPORT_EMAIL = "hi@victhereum.com";
 const GITHUB_URL = "https://github.com/victhereum/streamZen";
 const CHROME_STORE_URL =
   "https://chromewebstore.google.com/detail/streamzen-cinematic-compa/ffkoailjikbieofjmojdpnhfcighomli";
+const EDGE_STORE_URL = 
+  "https://microsoftedge.microsoft.com/addons/detail/djhdkcjefohpeegcmcgbimfmdonbobla";
 const DONATE_URL = "https://flutterwave.com/donate/zcyylavbtsa4";
 
 const SUPPORTED_SITES = [
@@ -233,7 +235,7 @@ export default function App() {
             </a>
 
             <a
-              href={CHROME_STORE_URL}
+              href={browser.name === "Edge" ? EDGE_STORE_URL : CHROME_STORE_URL}
               target="_blank"
               rel="noreferrer"
               className="shrink-0"
@@ -282,7 +284,7 @@ export default function App() {
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full">
                 {browser.isChromium ? (
                   <a
-                    href={CHROME_STORE_URL}
+                    href={browser.name === "Edge" ? EDGE_STORE_URL : CHROME_STORE_URL}
                     target="_blank"
                     rel="noreferrer"
                     className="w-full sm:w-auto"
@@ -298,7 +300,7 @@ export default function App() {
                 ) : (
                   <div className="flex flex-col items-center gap-3">
                     <a
-                      href={CHROME_STORE_URL}
+                      href={browser.name === "Edge" ? EDGE_STORE_URL : CHROME_STORE_URL}
                       target="_blank"
                       rel="noreferrer"
                       className="w-full sm:w-auto"
