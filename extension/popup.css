@@ -176,4 +176,24 @@ input[type=range]::-webkit-slider-runnable-track {
   font-size: 11px;
   color: #8b949e;
   margin-top: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.footer a {
+  color: #ff4b2b;
+  text-decoration: none;
+  font-weight: 500;
+  transition: opacity 0.2s ease;
+}
+
+.footer a:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+.copyright {
+  font-size: 10px;
+  opacity: 0.8;
 }
