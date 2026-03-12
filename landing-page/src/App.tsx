@@ -15,6 +15,9 @@ import {
   Github,
   Star,
   Heart,
+  Settings,
+  Sliders,
+  Volume2,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect, useMemo } from "react";
@@ -276,9 +279,24 @@ export default function App() {
                 more manually skipping intros or fumbling with your mouse
                 between episodes.
               </p>
-              <div className="flex flex-col items-center justify-center gap-6">
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full">
-                  {browser.isChromium ? (
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full">
+                {browser.isChromium ? (
+                  <a
+                    href={CHROME_STORE_URL}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full sm:w-auto"
+                  >
+                    <Button
+                      size="lg"
+                      className="h-14 px-10 text-lg font-bold w-full shadow-lg shadow-primary/20 gap-3 rounded-full"
+                    >
+                      <BrowserIcon className="w-5 h-5" />
+                      Add to {browser.name} — It's Free
+                    </Button>
+                  </a>
+                ) : (
+                  <div className="flex flex-col items-center gap-3">
                     <a
                       href={CHROME_STORE_URL}
                       target="_blank"
@@ -287,43 +305,17 @@ export default function App() {
                     >
                       <Button
                         size="lg"
-                        className="h-14 px-10 text-lg font-bold w-full shadow-lg shadow-primary/20 gap-3"
+                          className="h-14 px-10 text-lg font-bold w-full shadow-lg shadow-primary/20 gap-3"
                       >
-                        <BrowserIcon className="w-5 h-5" />
-                        Add to {browser.name} — It's Free
+                        <ChromeIcon className="w-5 h-5" />
+                        Get it on Chrome Web Store
                       </Button>
                     </a>
-                  ) : (
-                    <div className="flex flex-col items-center gap-3">
-                      <a
-                        href={CHROME_STORE_URL}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="w-full sm:w-auto"
-                      >
-                        <Button
-                          size="lg"
-                          className="h-14 px-10 text-lg font-bold w-full shadow-lg shadow-primary/20 gap-3"
-                        >
-                          <ChromeIcon className="w-5 h-5" />
-                          Get it on Chrome Web Store
-                        </Button>
-                      </a>
-                      <p className="text-xs text-muted-foreground">
-                        Also works on Edge, Brave, Arc & Opera
-                      </p>
-                    </div>
-                  )}
-                </div>
-                <motion.a
-                  href={DONATE_URL}
-                  target="_blank"
-                  rel="noreferrer"
-                  whileHover={{ scale: 1.05 }}
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-2"
-                >
-                  <Heart className="w-4 h-4" /> Support the project: Buy Me Zobo
-                </motion.a>
+                    <p className="text-xs text-muted-foreground">
+                      Also works on Edge, Brave, Arc & Opera
+                    </p>
+                  </div>
+                )}             
               </div>
             </motion.div>
           </div>
@@ -369,35 +361,50 @@ export default function App() {
             StreamZen Features — Skip Intro, Autoplay, Fullscreen & Ad Removal
             for Moviebox
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[
               {
-                title: "Instant Skip",
-                desc: "Intros disappear with one click. StreamZen knows exactly when the story starts.",
+                title: "Personalized Settings",
+                desc: "Take total control. Toggle auto-skip, adjust timers, and set your preferences through the new settings dashboard.",
+                icon: <Settings className="w-6 h-6" aria-hidden="true" />,
+              },
+              {
+                title: "Precision Skipping",
+                desc: "Intros disappear instantly. Adjust fallback timers to match your favorite shows perfectly.",
                 icon: <SkipForward className="w-6 h-6" aria-hidden="true" />,
               },
               {
+                title: "Always Unmuted",
+                desc: "Tired of muted starts? StreamZen can now auto-unmute players so the sound starts when the movie does.",
+                icon: <Volume2 className="w-6 h-6" aria-hidden="true" />,
+              },
+              {
                 title: "Smart Autoplay",
-                desc: "The next episode starts automatically. No manual clicking required.",
+                desc: "The next episode starts with a customizable countdown. No more mouse fumbling.",
                 icon: <Play className="w-6 h-6" aria-hidden="true" />,
               },
               {
                 title: "Total Fullscreen",
-                desc: "Once you go fullscreen, you stay there. Episodes swap without exiting.",
+                desc: "Seamless transitions between episodes without ever dropping out of fullscreen mode.",
                 icon: <Maximize2 className="w-6 h-6" aria-hidden="true" />,
               },
               {
-                title: "Pure Focus",
-                desc: "We clear away ads and distractions so you can just enjoy the film.",
-                icon: <ShieldCheck className="w-6 h-6" aria-hidden="true" />,
+                title: "Total Customization",
+                desc: "Adjust skip thresholds and autoplay triggers with precision interactive sliders.",
+                icon: <Sliders className="w-6 h-6" aria-hidden="true" />,
               },
             ].map((f, i) => (
-              <article key={i} className="flex flex-col">
-                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 text-primary border border-primary/20">
+              <article
+                key={i}
+                className="group p-8 rounded-3xl border border-border/50 bg-muted/20 hover:bg-muted/40 transition-all hover:shadow-xl hover:-translate-y-1"
+              >
+                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-6 text-primary border border-primary/20 group-hover:scale-110 transition-transform">
                   {f.icon}
                 </div>
-                <h3 className="text-xl font-bold mb-2">{f.title}</h3>
-                <p className="text-muted-foreground leading-relaxed">
+                <h3 className="text-xl font-bold mb-3 tracking-tight">
+                  {f.title}
+                </h3>
+                <p className="text-muted-foreground leading-relaxed text-sm">
                   {f.desc}
                 </p>
               </article>
