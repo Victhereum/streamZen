@@ -65,4 +65,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const percent = ((slider.value - slider.min) / (slider.max - slider.min)) * 100;
     slider.style.backgroundSize = percent + '% 100%';
   }
+
+  // Set Version Number dynamically
+  const versionDisplay = document.getElementById('versionDisplay');
+  if (versionDisplay && chrome.runtime && chrome.runtime.getManifest) {
+    versionDisplay.textContent = 'Version ' + chrome.runtime.getManifest().version;
+  }
 });
