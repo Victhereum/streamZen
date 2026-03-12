@@ -1,7 +1,6 @@
 /* content.css */
 .mbx-next-episode-btn,
-.mbx-skip-intro-btn,
-.mbx-pip-btn {
+.mbx-skip-intro-btn {
   position: absolute;
   z-index: 999999;
   background-color: rgba(0, 0, 0, 0.7);
@@ -23,15 +22,13 @@
 
 /* Show buttons when video wrapper is hovered */
 .mbx-video-wrapper-hover .mbx-next-episode-btn,
-.mbx-video-wrapper-hover .mbx-skip-intro-btn,
-.mbx-video-wrapper-hover .mbx-pip-btn {
+.mbx-video-wrapper-hover .mbx-skip-intro-btn {
   opacity: 1;
   pointer-events: auto;
 }
 
 .mbx-next-episode-btn:hover,
-.mbx-skip-intro-btn:hover,
-.mbx-pip-btn:hover {
+.mbx-skip-intro-btn:hover {
   background-color: white;
   color: black;
   transform: scale(1.05);
@@ -45,15 +42,6 @@
 .mbx-next-episode-btn {
   bottom: 80px;
   right: 20px;
-}
-
-.mbx-pip-btn {
-  top: 20px;
-  right: 20px;
-  padding: 8px 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 /* Netflix-style Countdown Overlay */
