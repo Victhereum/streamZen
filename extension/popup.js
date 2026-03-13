@@ -64,6 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
     valEl.textContent = slider.value + 's';
     const percent = ((slider.value - slider.min) / (slider.max - slider.min)) * 100;
     slider.style.backgroundSize = percent + '% 100%';
+    slider.style.setProperty('--value', percent + '%');
   }
 
   // Set Version Number dynamically
