@@ -32,7 +32,15 @@ const CHROME_STORE_URL =
   "https://chromewebstore.google.com/detail/streamzen-cinematic-compa/ffkoailjikbieofjmojdpnhfcighomli";
 const EDGE_STORE_URL = 
   "https://microsoftedge.microsoft.com/addons/detail/djhdkcjefohpeegcmcgbimfmdonbobla";
+const FIREFOX_STORE_URL = 
+  "https://addons.mozilla.org/en-US/firefox/addon/streamzen/";
 const DONATE_URL = "https://flutterwave.com/donate/zcyylavbtsa4";
+
+const getStoreUrl = (browserName: string) => {
+  if (browserName === "Firefox") return FIREFOX_STORE_URL;
+  if (browserName === "Edge") return EDGE_STORE_URL;
+  return CHROME_STORE_URL;
+};
 
 const SUPPORTED_SITES = [
   "moviebox.ph",
@@ -92,6 +100,21 @@ function BraveIcon({ className }: { className?: string }) {
   );
 }
 
+function FirefoxIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      role="img"
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+      fill="currentColor"
+    >
+      <title>Firefox</title>
+      <path d="M11.972 0a11.956 11.956 0 00-6.05 1.625 12.016 12.016 0 00-4.88 4.793c.124-.04.254-.075.385-.1.171-.035.35-.058.537-.065.186-.007.382 0 .584.025.176.02.352.053.526.096A4.545 4.545 0 014.28 7.02c.07.054.14.113.208.175.05.045.099.092.147.141a3.024 3.024 0 00.916 2.07c5.21-.5 5.568-6.195 5.568-6.195 2.502 1.487 2.14 4.545 2.14 4.545-.373 1.95-2.228 2.012-2.228 2.012-2.13.064-2.85-1.125-2.85-1.125-2.18-.174-2.864 1.25-2.864 1.25-1.09 2.022.427 3.652.427 3.652 1.2 1.15 3.344.887 3.344.887 1.05-.182 1.96-.826 2.564-1.815a5.59 5.59 0 00.56-1.503c.09-.344.15-.705.18-1.077.01-.115.01-.226.01-.339 0-.012 0-.024-.002-.036 1.446 1.11 2.213 2.924 2.128 4.885-.05 1.155-.425 2.25-1.076 3.167a7.203 7.203 0 01-1.353 1.436c-.23.18-.475.342-.729.489A12.011 12.011 0 0023.957 12c0-6.6-5.358-11.955-11.985-12z"/>
+    </svg>
+  );
+}
+
 function DefaultBrowserIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -131,7 +154,7 @@ function detectBrowser(): BrowserInfo {
     return { name: "Chrome", icon: ChromeIcon, isChromium: true };
   }
   if (ua.includes("Firefox")) {
-    return { name: "Firefox", icon: DefaultBrowserIcon, isChromium: false };
+    return { name: "Firefox", icon: FirefoxIcon, isChromium: false };
   }
   if (ua.includes("Safari") && !ua.includes("Chrome")) {
     return { name: "Safari", icon: DefaultBrowserIcon, isChromium: false };
@@ -235,7 +258,7 @@ export default function App() {
             </a>
 
             <a
-              href={browser.name === "Edge" ? EDGE_STORE_URL : CHROME_STORE_URL}
+              href={getStoreUrl(browser.name)}
               target="_blank"
               rel="noreferrer"
               className="shrink-0"
@@ -282,9 +305,9 @@ export default function App() {
                 between episodes.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full">
-                {browser.isChromium ? (
+                {browser.isChromium || browser.name === "Firefox" ? (
                   <a
-                    href={browser.name === "Edge" ? EDGE_STORE_URL : CHROME_STORE_URL}
+                    href={getStoreUrl(browser.name)}
                     target="_blank"
                     rel="noreferrer"
                     className="w-full sm:w-auto"
@@ -300,7 +323,7 @@ export default function App() {
                 ) : (
                   <div className="flex flex-col items-center gap-3">
                     <a
-                      href={browser.name === "Edge" ? EDGE_STORE_URL : CHROME_STORE_URL}
+                      href={CHROME_STORE_URL}
                       target="_blank"
                       rel="noreferrer"
                       className="w-full sm:w-auto"
@@ -314,7 +337,7 @@ export default function App() {
                       </Button>
                     </a>
                     <p className="text-xs text-muted-foreground">
-                      Also works on Edge, Brave, Arc & Opera
+                      Also works on Firefox, Edge, Brave, Arc & Opera
                     </p>
                   </div>
                 )}             
